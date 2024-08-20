@@ -10,4 +10,3 @@ def home():
 # property
 app.include_router(property.router, prefix="/property", tags=["Property"])
 
-
