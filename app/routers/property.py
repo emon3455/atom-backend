@@ -4,6 +4,35 @@ from app.database import Session
 
 router = APIRouter()
 
+
+@router.get("/")
+def get_properties(
+    limit: int = Query(10, description="Number of results to return"),
+    offset: int = Query(0, description="Number of results to skip")
+):
+    session = Session()
+    try:
+        sql = text(f"""
+            SELECT * FROM location_properties
+            LIMIT :limit OFFSET :offset
+        """)
+
+        result_proxy = session.execute(sql, {"limit": limit, "offset": offset})
+        results = result_proxy.fetchall()
+
+        if results:
+            columns = result_proxy.keys()
+            results_list = [dict(zip(columns, row)) for row in results]
+            return results_list
+        else:
+            return []
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        session.close()
+
 @router.get("/filter")
 def filter_properties_by_search_text(searchText: str = Query(..., description="Search text for filtering data")):
     session = Session()
