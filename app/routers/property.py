@@ -63,3 +63,18 @@ def filter_properties_by_search_text(searchText: str = Query(..., description="S
 
     finally:
         session.close()
+
+
+@router.get("/attom-search")
+def get_properties(searchText: str = Query(..., description="Search text for filtering data")):
+    session = Session()
+    try:
+      print("printing...")
+
+      # here you have to search product by using the searchText from atom api
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    finally:
+        session.close()
