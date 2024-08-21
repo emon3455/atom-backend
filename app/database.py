@@ -13,7 +13,6 @@ db_name = os.getenv('DB_NAME')
 
 pymysql.install_as_MySQLdb()
 
-print(db_user,db_password,db_host,db_name)
 
 engine = create_engine(f'mysql+mysqldb://{db_user}:{db_password}@{db_host}/{db_name}', pool_recycle=3600)
 Session = sessionmaker(bind=engine)

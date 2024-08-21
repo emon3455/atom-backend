@@ -41,11 +41,7 @@ def filter_properties_by_search_text(searchText: str = Query(..., description="S
 
         sql = text("""
             SELECT * FROM location_properties
-            WHERE property_address_postal1 LIKE :searchText
-            OR property_address_postal2 LIKE :searchText
-            OR property_address_postal3 LIKE :searchText
-            OR property_address_oneLine LIKE :searchText
-            OR property_area_countrysecsubd LIKE :searchText
+            WHERE  property_address_oneLine LIKE :searchText
         """)
 
         result_proxy = session.execute(sql, {"searchText": search_value})
