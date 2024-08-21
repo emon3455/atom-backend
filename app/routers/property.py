@@ -4,9 +4,13 @@ from app.database import Session
 import requests
 import json
 from typing import List, Dict, Any
-router = APIRouter()
+from dotenv import load_dotenv
+import os
 
-ATTOM_API_KEY = "385a8fbd3b0fba69c1ca8a58471afb4e"
+router = APIRouter()
+load_dotenv()
+
+attom_api_key = os.getenv('ATTOM_API_KEY')
 ATTOM_API_URL = "https://api.gateway.attomdata.com/propertyapi/v1.0.0/property/detail"
 
 
@@ -189,7 +193,7 @@ def convert_attom_response(attom_response: Dict[str, Any]) -> Dict[str, Any]:
 def get_attom_property(search_text: str) -> Dict[str, Any]:
     headers = {
         "Accept": "application/json",
-        "apiKey":  ATTOM_API_KEY
+        "apiKey":  attom_api_key
     }
     params = {
         "address": search_text,
