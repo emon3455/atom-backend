@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from sqlalchemy import text
-from app.database import Session
+from app.database import Session, SessionSecondary
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 import requests
@@ -42,42 +42,62 @@ def get_properties(
     finally:
         session.close()
 
+def extract_street_address(address: str) -> str:
+    parts = address.split(',')
+    return parts[0].strip() if parts else address.strip()
+
 @router.get("/filter")
 def filter_properties_by_search_text(searchText: str = Query(..., description="Search text for filtering data")):
-    session = Session()
+    session_primary = Session()
+    session_secondary = SessionSecondary()
+
     try:
         search_value = f"%{searchText}%"
 
-        sql = text("""
+        # Try to get data from the primary database
+        sql_primary = text("""
             SELECT * FROM location_properties
             WHERE property_address_oneLine LIKE :searchText
         """)
+        result_proxy_primary = session_primary.execute(sql_primary, {"searchText": search_value})
+        results_primary = result_proxy_primary.fetchall()
 
-        result_proxy = session.execute(sql, {"searchText": search_value})
-        results = result_proxy.fetchall()
-
-        if results:
-            columns = result_proxy.keys()
-            results_list = [dict(zip(columns, row)) for row in results]
+        if results_primary:
+            columns = result_proxy_primary.keys()
+            results_list = [dict(zip(columns, row)) for row in results_primary]
             return results_list
-        else:
-            # Search ATTOM API
-            attom_data = get_attom_property(searchText)
-            if not attom_data:
-                return []
 
-            # Convert and insert into local database
-            converted_data = convert_attom_response(attom_data)
-            insert_property_into_db(converted_data)
+        street_address = extract_street_address(searchText)
+        sql_secondary = text("""
+            SELECT * FROM property_info
+            WHERE address_address LIKE :searchText
+        """)
+        result_proxy_secondary = session_secondary.execute(sql_secondary, {"searchText": street_address})
+        results_secondary = result_proxy_secondary.fetchall()
 
-            # Return the newly inserted data
-            return [converted_data]
+        if results_secondary:
+            columns = result_proxy_secondary.keys()
+            results_list = [dict(zip(columns, row)) for row in results_secondary]
+            return results_list
+
+        # If still not found, query ATTOM API
+        attom_data = get_attom_property(searchText)
+        if not attom_data:
+            return []
+
+        # Convert and insert into the primary database
+        converted_data = convert_attom_response(attom_data)
+        insert_property_into_db(converted_data)
+
+        # Return the newly inserted data
+        return [converted_data]
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
     finally:
-        session.close()
+        session_primary.close()
+        session_secondary.close()
 
 def convert_attom_response(attom_response: Dict[str, Any]) -> Dict[str, Any]:
     property_data = attom_response.get("property", [{}])[0]
@@ -255,3 +275,9 @@ def insert_property_into_db(property_data: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         session.close()
+
+@router.post("/manage-email")
+async def manageEmail(request: any):
+    print(request)
+
+
