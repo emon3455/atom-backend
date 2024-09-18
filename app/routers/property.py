@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from sqlalchemy import text
+from fastapi.responses import JSONResponse
 from app.database import Session, SessionSecondary
 from typing import List, Dict, Any
 from dotenv import load_dotenv
@@ -278,6 +279,6 @@ def insert_property_into_db(property_data: Dict[str, Any]):
 
 @router.post("/manage-email")
 async def manageEmail(request: any):
-    print(request)
+    return JSONResponse(content={"response": request})
 
 
