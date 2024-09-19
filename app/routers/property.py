@@ -277,8 +277,5 @@ def insert_property_into_db(property_data: Dict[str, Any]):
     finally:
         session.close()
 
-@router.post("/manage-email")
-async def manageEmail(request: any):
-    return JSONResponse(content={"response": request})
 
 
